@@ -1,6 +1,6 @@
 # Activity File for Portland, OR
 
-```{r chunk1, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+```{r chunk1, eval = TRUE, echo = FALSE, results = "hide", warning = FALSE, error = TRUE, message = FALSE, fig.width = 8}
 #getwd()
 #setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
 #install.packages("dplyr")
@@ -109,7 +109,7 @@ travelers. (TA > 0).
 
 ## Archive
 
-```{r chunk5, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+```{r chunk5, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 
 aggregatedportland <- portlanddata %>%
   group_by(HOUSEID, PERSONID) %>%
