@@ -1,0 +1,22 @@
+# use glob syntax.
+syntax: glob
+
+src/__pycache__/
+*.pyc
+.project
+.pydevproject
+.DS_Store
+data/*
+plots/.DS_Store
+plots/projections/.DS_Store
+plots/projections/*
+src/.DS_Store
+outputs/*
+plotting_scripts/plots/*
+plotting_scripts/*.png
+plotting_scripts/*.pkl
+shapleys/
+auxillary/
+src/England_impact/*
+\.\#*
+data
