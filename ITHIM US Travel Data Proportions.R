@@ -1,5 +1,5 @@
 getwd()
-setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
+#setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
 install.packages("dplyr")
 install.packages("data.table")
 library(lubridate)
@@ -9,8 +9,10 @@ library(dplyr)
 library(car)
 library(kimisc)
 
+
+trippub <- "/Users/syounkin/NHTS/data/trippub.csv"
 # Read .CSV
-personaltrips <- read.csv2("trippub.csv", header = TRUE, sep = ",")
+personaltrips <- read.csv2(trippub, header = TRUE, sep = ",")
 
 # New data, only Portland
 
