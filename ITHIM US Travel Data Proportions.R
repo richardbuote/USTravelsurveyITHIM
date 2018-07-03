@@ -1,7 +1,7 @@
-getwd()
+#getwd()
 #setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
-install.packages("dplyr")
-install.packages("data.table")
+#install.packages("dplyr")
+#install.packages("data.table")
 library(lubridate)
 library(stringr)
 library(data.table)
@@ -24,7 +24,7 @@ portlanddata$agegroup <- ifelse(portlanddata$R_AGE <= 18, 0, 1)
 
 # Calculate active minutes (transit minutes divided by 2)
 
-portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS == 11 & 15 & 16, portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS == 1 & 2, portlanddata$TRVLCMIN*1, 0))
+portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS %in% c(11,15,16), portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS %in% c(1,2), portlanddata$TRVLCMIN*1, 0))
 
 #Aggregate data
 aggregatedportland <- portlanddata %>%
