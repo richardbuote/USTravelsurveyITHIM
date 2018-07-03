@@ -1,0 +1,145 @@
+# Activity File for Portland, OR
+
+```{r chunk1, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+#getwd()
+#setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
+#install.packages("dplyr")
+#install.packages("data.table")
+library(lubridate)
+library(stringr)
+library(data.table)
+library(dplyr)
+library(car)
+library(kimisc)
+library("tidyverse")
+```
+
+## Read in the data
+Update _trippub_ to be the filename with full path.
+
+```{r chunk2, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+trippub <- "~/NHTS/data/trippub.csv"
+```
+
+Now we read in the data and subset on _HHCBSA == 38900_ (the Portland
+Metropolitan area) and create a binary age category split at age 18
+years.
+
+```{r chunk3, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+personaltrips <- read.csv2(trippub, header = TRUE, sep = ",")
+portlanddata <- personaltrips[which (personaltrips$HH_CBSA == 38900),]
+portlanddata$agegroup <- ifelse(portlanddata$R_AGE <= 18, 0, 1)
+```
+
+# Calculate active minutes (transit minutes divided by 2)
+In the following code chuk I changed the syntax a little.  Not sure it
+was working properly before.
+
+```{r chunk4, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS %in% c(11,16), portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS %in% c(1,2), portlanddata$TRVLCMIN*1, 0))
+```
+
+In the code chunk above we have included bus and light rail trips, but only at half
+the duration.  I propose we change this to a fixed amount, say the
+average time it takes to walk to a bus stop, and score it as walking
+for that duration.
+
+Note that i excluded mode 15 because it did not appear in the Portland data.
+
+# Total duration
+
+In order to weight cycling, walking and transit durations differently
+we need to separate out the respective durations.  I have included
+some code to help start.
+
+```{r chunksgy, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+
+portlanddata %>%
+    group_by(TRPTRANS, HOUSEID, PERSONID, agegroup) %>%
+    summarise( T = sum(TRVLCMIN) ) %>%
+    spread(TRPTRANS, T, fill = 0) %>%
+    ungroup() %>%
+    filter( (`1` > 0) | (`2` > 0) | (`11` > 0) | (`16` > 0)) %>%
+    select( c(HOUSEID, PERSONID,agegroup,`1`, `2`, `11`, `16`)) %>%
+    mutate(TA = 7*(3*`1`/60 + 6*`2`/60))
+```
+
+It would be much better if we renamed the modes.  We can recycle this
+code I wrote a few months ago.  In it I simplified the bus and subway
+modes.
+
+```{r chunksgy2, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+
+portlanddata <- personaltrips[which(personaltrips$HH_CBSA == 38900),]
+
+portlanddata <- with(portlanddata,{
+    data.frame(HOUSEID = HOUSEID,
+               PERSONID = PERSONID,
+               TDCASEID = TDCASEID,
+               TRPTRANS = factor(ifelse(TRPTRANS %in% c(-9,-8,-7,97), NA, TRPTRANS), levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20), labels = c("walk","cycle","car","SUV","van","pickup truck","golf cart/Segway","motorcycle/moped","RV","school bus","bus","paratransit/Dial-a-ride","private/charter/tour/shuttle bus","city-to-city bus (Greyhound, Megabus)","Amtrak/commuter rail","subway","taxi/limo/Uber/Lyft", "rental car/Zipcar/Car2Go", "airplane","boat/ferry/water taxi")),
+               TRVLCMIN = as.numeric(TRVLCMIN),
+               URBRUR  = as.factor(URBRUR),
+               MSACAT = as.factor(MSACAT),
+               MSA = ifelse(MSASIZE %in% 1:5, TRUE, FALSE),
+               TRPMILES = as.numeric(TRPMILES),
+               agegroup = ifelse(R_AGE <= 18, 0, 1)
+)})
+
+portlanddata <- with(portlanddata,{
+    data.frame(houseID=HOUSEID, subjectID=PERSONID, duration = TRVLCMIN, mode = TRPTRANS, agegroup = agegroup)
+})
+```
+
+```{r chunksgy3, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+
+TA.df <- portlanddata %>%
+    group_by(mode, houseID, subjectID, agegroup) %>%
+    summarise( T = sum(duration) ) %>%
+    spread(mode, T, fill = 0) %>%
+    ungroup() %>%
+    filter( (walk > 0) | (cycle > 0) | (subway > 0) | (bus > 0)) %>%
+    select( c(houseID, subjectID, agegroup, walk, cycle, bus, subway)) %>%
+    mutate(TA = 7*(3*walk/60 + 6*cycle/60 + ifelse(bus > 0, 3*15/60,0) + ifelse(subway > 0, 3*15/60,0)))
+
+hist(log(TA.df$TA))
+```
+
+Recall that this is the distribution of travel activity for active
+travelers. (TA > 0).
+
+## Archive
+
+```{r chunk5, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+
+aggregatedportland <- portlanddata %>%
+  group_by(HOUSEID, PERSONID) %>%
+  summarise(agegroup = first(agegroup),
+            transitminutes = sum(transitminutes))
+
+
+summaryData <- cbind(
+  aggregate(
+    aggregatedportland[, "transitminutes"],
+    by = list(agegroup = aggregatedportland$agegroup),
+    FUN = mean,
+    na.rm = FALSE
+  ),
+  aggregate(
+    aggregatedportland[, "transitminutes"],
+    by = list(agegroup = aggregatedportland$agegroup),
+    FUN = sd,
+    na.rm = FALSE
+  )[, 2]
+)
+
+colnames(summaryData) <- c("agegroup", "mean", "sd")
+
+summaryData$proportion <- NA
+
+agegroups <- unique(aggregatedportland$agegroup)
+
+for (i in 1:length(agegroups)) {
+  tempdata <- aggregatedportland[which(aggregatedportland$agegroup == agegroups[i]), ]
+  summaryData[i, "proportion"] <- length(which(tempdata$transitminutes > 0))  / nrow(tempdata)
+}
+```
