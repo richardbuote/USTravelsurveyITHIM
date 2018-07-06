@@ -78,7 +78,6 @@ TA.df <- portlanddata %>%
     select( c(houseID, subjectID, agegroup, walk, cycle, bus, subway)) %>%
     mutate(TA = 7*(3*walk/60 + 6*cycle/60 + ifelse(bus > 0, 3*15/60,0) + ifelse(subway > 0, 3*15/60,0)))
 
-hist(TA.df$TA)
 hist(log(TA.df$TA))
 ```
 
