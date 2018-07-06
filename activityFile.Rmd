@@ -133,6 +133,13 @@ colnames(activityFile.df) <- c("ID","mean","sd","p0")
 write.csv(activityFile.df, file = "./portland.baseline.csv", row.names = FALSE, quote = FALSE)
 ```
 
+```{r chunksgy7, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+activityFile.scenario.df <- within(activityFile.df, {
+    p0 <- ifelse( p0 + 0.10 <= 1, p0 + 0.10, 1)
+})
+write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names = FALSE, quote = FALSE)
+```
+
 ## Archive
 
 ```{r chunk5, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
