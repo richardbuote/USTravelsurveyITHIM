@@ -1,16 +1,6 @@
 # Activity File for Portland, OR
 
 ```{r chunk1, eval = TRUE, echo = FALSE, results = "hide", warning = FALSE, error = TRUE, message = FALSE, fig.width = 8}
-#getwd()
-#setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
-#install.packages("dplyr")
-#install.packages("data.table")
-library(lubridate)
-library(stringr)
-library(data.table)
-library(dplyr)
-library(car)
-library(kimisc)
 library("tidyverse")
 library("devtools")
 #install_github("ITHIM/ITHIM", ref = "ITHIM-R")
@@ -18,7 +8,6 @@ install("~/ITHIM/")
 library("ITHIM")
 ```
 
-## Read in the data
 Update _trippub_ to be the filename with full path.
 
 ```{r chunk2, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
@@ -34,23 +23,6 @@ personaltrips <- read.csv2(trippub, header = TRUE, sep = ",")
 portlanddata <- personaltrips[which (personaltrips$HH_CBSA == 38900),]
 portlanddata$agegroup <- ifelse(portlanddata$R_AGE <= 18, 0, 1)
 ```
-
-# Calculate active minutes (transit minutes divided by 2)
-In the following code chuk I changed the syntax a little.  Not sure it
-was working properly before.
-
-```{r chunk4, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
-portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS %in% c(11,16), portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS %in% c(1,2), portlanddata$TRVLCMIN*1, 0))
-```
-
-In the code chunk above we have included bus and light rail trips, but only at half
-the duration.  I propose we change this to a fixed amount, say the
-average time it takes to walk to a bus stop, and score it as walking
-for that duration.
-
-Note that i excluded mode 15 because it did not appear in the Portland data.
-
-# Total duration
 
 In order to weight cycling, walking and transit durations differently
 we need to separate out the respective durations.  I have included
@@ -68,9 +40,10 @@ portlanddata %>%
     mutate(TA = 7*(3*`1`/60 + 6*`2`/60))
 ```
 
-It would be much better if we renamed the modes.  We can recycle this
-code I wrote a few months ago.  In it I simplified the bus and subway
-modes.
+Note that i excluded mode 15 because it did not appear in the Portland
+data.  It would be much better if we renamed the modes.  We can
+recycle this code I wrote a few months ago.  In it I simplified the
+bus and subway modes.
 
 ```{r chunksgy2, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 
@@ -145,7 +118,20 @@ write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names 
 CRA("portland.baseline.csv","portland.scenario.csv")
 ```
 
-## Archive
+## Archive (Unevaluated code)
+
+In the following code chuk I changed the syntax a little.  Not sure it
+was working properly before.
+
+```{r chunk4, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS %in% c(11,16), portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS %in% c(1,2), portlanddata$TRVLCMIN*1, 0))
+```
+
+In the code chunk above we have included bus and light rail trips, but only at half
+the duration.  I propose we change this to a fixed amount, say the
+average time it takes to walk to a bus stop, and score it as walking
+for that duration.
+
 
 ```{r chunk5, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 
