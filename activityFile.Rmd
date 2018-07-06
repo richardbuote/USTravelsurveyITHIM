@@ -12,6 +12,9 @@ library(dplyr)
 library(car)
 library(kimisc)
 library("tidyverse")
+library("devtools")
+#install_github("ITHIM/ITHIM", ref = "ITHIM-R")
+install("~/ITHIM/")
 ```
 
 ## Read in the data
