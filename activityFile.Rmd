@@ -15,6 +15,7 @@ library("tidyverse")
 library("devtools")
 #install_github("ITHIM/ITHIM", ref = "ITHIM-R")
 install("~/ITHIM/")
+library("ITHIM")
 ```
 
 ## Read in the data
@@ -138,6 +139,10 @@ activityFile.scenario.df <- within(activityFile.df, {
     p0 <- ifelse( p0 - 0.10 >= 0, p0 - 0.10, 1)
 })
 write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names = FALSE, quote = FALSE)
+```
+
+```{r chunksgy8, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+CRA("portland.baseline.csv","portland.scenario.csv")
 ```
 
 ## Archive
