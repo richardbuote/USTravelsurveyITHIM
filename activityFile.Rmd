@@ -110,6 +110,10 @@ hist(log(TA.df$TA))
 Recall that this is the distribution of travel activity for active
 travelers. (TA > 0).
 
+```{r chunksgy4, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+TA.summary <- TA.df %>% group_by(agegroup) %>% summarise(mean = mean(TA), sd = sd(TA))
+```
+
 ## Archive
 
 ```{r chunk5, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
