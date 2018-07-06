@@ -127,6 +127,12 @@ p0.df <- portlanddata %>%
     select(agegroup, p0)
 ```
 
+```{r chunksgy6, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+activityFile.df <- full_join(TA.summary,p0.df, by = "agegroup")
+colnames(activityFile.df) <- c("ID","mean","sd","p0")
+write.csv(activityFile.df, file = "./portland.baseline.csv", row.names = FALSE, quote = FALSE)
+```
+
 ## Archive
 
 ```{r chunk5, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
