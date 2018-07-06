@@ -85,7 +85,7 @@ portlanddata <- with(portlanddata,{
                MSACAT = as.factor(MSACAT),
                MSA = ifelse(MSASIZE %in% 1:5, TRUE, FALSE),
                TRPMILES = as.numeric(TRPMILES),
-               agegroup = ifelse(R_AGE <= 18, 0, 1)
+               agegroup = ifelse(R_AGE <= 18, "minor", "adult")
 )})
 
 portlanddata <- with(portlanddata,{
@@ -112,6 +112,19 @@ travelers. (TA > 0).
 
 ```{r chunksgy4, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 TA.summary <- TA.df %>% group_by(agegroup) %>% summarise(mean = mean(TA), sd = sd(TA))
+```
+
+```{r chunksgy5, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+p0.df <- portlanddata %>%
+    group_by(mode, houseID, subjectID, agegroup) %>%
+    summarise( T = sum(duration) ) %>%
+    spread(mode, T, fill = 0) %>%
+    ungroup() %>%
+    group_by(agegroup) %>%
+    summarise( n1 = sum((walk > 0) | (cycle > 0) | (subway > 0) | (bus > 0)), n0 = sum((walk == 0) & (cycle == 0) & (subway == 0) & (bus == 0)), n = n()) %>%
+    ungroup() %>%
+    mutate(p0 = n0/n) %>%
+    select(agegroup, p0)
 ```
 
 ## Archive
