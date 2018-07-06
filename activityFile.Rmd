@@ -109,12 +109,20 @@ write.csv(activityFile.df, file = "./portland.baseline.csv", row.names = FALSE, 
 
 ```{r chunksgy7, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 activityFile.scenario.df <- within(activityFile.df, {
-    p0 <- ifelse( p0 - 0.10 >= 0, p0 - 0.10, 1)
+    p0 <- ifelse( p0 - 0.10 >= 0, p0 - 0.10, 0)
 })
 write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names = FALSE, quote = FALSE)
 ```
 
 ```{r chunksgy8, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+CRA("portland.baseline.csv","portland.scenario.csv")
+```
+
+```{r chunksgy9, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+activityFile.scenario.df <- within(activityFile.df, {
+    p0 <- ifelse( p0 + 0.10 <= 1, p0 + 0.10, 1)
+})
+write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names = FALSE, quote = FALSE)
 CRA("portland.baseline.csv","portland.scenario.csv")
 ```
 
