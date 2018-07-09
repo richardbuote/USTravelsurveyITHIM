@@ -1,20 +1,13 @@
 # Activity File for Portland, OR
 
 ```{r chunk1, eval = TRUE, echo = FALSE, results = "hide", warning = FALSE, error = TRUE, message = FALSE, fig.width = 8}
-#getwd()
-#setwd("C:/Users/Richard Buote/Desktop/Trip Data USA/")
-#install.packages("dplyr")
-#install.packages("data.table")
-library(lubridate)
-library(stringr)
-library(data.table)
-library(dplyr)
-library(car)
-library(kimisc)
 library("tidyverse")
+library("devtools")
+#install_github("ITHIM/ITHIM", ref = "ITHIM-R")
+install("~/ITHIM/")
+library("ITHIM")
 ```
 
-## Read in the data
 Update _trippub_ to be the filename with full path.
 
 ```{r chunk2, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
@@ -30,23 +23,6 @@ personaltrips <- read.csv2(trippub, header = TRUE, sep = ",")
 portlanddata <- personaltrips[which (personaltrips$HH_CBSA == 38900),]
 portlanddata$agegroup <- ifelse(portlanddata$R_AGE <= 18, 0, 1)
 ```
-
-# Calculate active minutes (transit minutes divided by 2)
-In the following code chuk I changed the syntax a little.  Not sure it
-was working properly before.
-
-```{r chunk4, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
-portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS %in% c(11,16), portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS %in% c(1,2), portlanddata$TRVLCMIN*1, 0))
-```
-
-In the code chunk above we have included bus and light rail trips, but only at half
-the duration.  I propose we change this to a fixed amount, say the
-average time it takes to walk to a bus stop, and score it as walking
-for that duration.
-
-Note that i excluded mode 15 because it did not appear in the Portland data.
-
-# Total duration
 
 In order to weight cycling, walking and transit durations differently
 we need to separate out the respective durations.  I have included
@@ -64,9 +40,10 @@ portlanddata %>%
     mutate(TA = 7*(3*`1`/60 + 6*`2`/60))
 ```
 
-It would be much better if we renamed the modes.  We can recycle this
-code I wrote a few months ago.  In it I simplified the bus and subway
-modes.
+Note that i excluded mode 15 because it did not appear in the Portland
+data.  It would be much better if we renamed the modes.  We can
+recycle this code I wrote a few months ago.  In it I simplified the
+bus and subway modes.
 
 ```{r chunksgy2, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 
@@ -82,7 +59,7 @@ portlanddata <- with(portlanddata,{
                MSACAT = as.factor(MSACAT),
                MSA = ifelse(MSASIZE %in% 1:5, TRUE, FALSE),
                TRPMILES = as.numeric(TRPMILES),
-               agegroup = ifelse(R_AGE <= 18, 0, 1)
+               agegroup = ifelse(R_AGE <= 18, "minor", "adult")
 )})
 
 portlanddata <- with(portlanddata,{
@@ -107,7 +84,62 @@ hist(log(TA.df$TA))
 Recall that this is the distribution of travel activity for active
 travelers. (TA > 0).
 
-## Archive
+```{r chunksgy4, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+TA.summary <- TA.df %>% group_by(agegroup) %>% summarise(mean = mean(TA), sd = sd(TA))
+```
+
+```{r chunksgy5, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+p0.df <- portlanddata %>%
+    group_by(mode, houseID, subjectID, agegroup) %>%
+    summarise( T = sum(duration) ) %>%
+    spread(mode, T, fill = 0) %>%
+    ungroup() %>%
+    group_by(agegroup) %>%
+    summarise( n1 = sum((walk > 0) | (cycle > 0) | (subway > 0) | (bus > 0)), n0 = sum((walk == 0) & (cycle == 0) & (subway == 0) & (bus == 0)), n = n()) %>%
+    ungroup() %>%
+    mutate(p0 = n0/n) %>%
+    select(agegroup, p0)
+```
+
+```{r chunksgy6, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+activityFile.df <- full_join(TA.summary,p0.df, by = "agegroup")
+colnames(activityFile.df) <- c("ID","mean","sd","p0")
+write.csv(activityFile.df, file = "./portland.baseline.csv", row.names = FALSE, quote = FALSE)
+```
+
+```{r chunksgy7, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+activityFile.scenario.df <- within(activityFile.df, {
+    p0 <- ifelse( p0 - 0.10 >= 0, p0 - 0.10, 0)
+})
+write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names = FALSE, quote = FALSE)
+```
+
+```{r chunksgy8, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+CRA("portland.baseline.csv","portland.scenario.csv")
+```
+
+```{r chunksgy9, eval = TRUE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+activityFile.scenario.df <- within(activityFile.df, {
+    p0 <- ifelse( p0 + 0.10 <= 1, p0 + 0.10, 1)
+})
+write.csv(activityFile.scenario.df, file = "./portland.scenario.csv", row.names = FALSE, quote = FALSE)
+CRA("portland.baseline.csv","portland.scenario.csv")
+```
+
+## Archive (Unevaluated code)
+
+In the following code chuk I changed the syntax a little.  Not sure it
+was working properly before.
+
+```{r chunk4, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
+portlanddata$transitminutes <- if_else(portlanddata$TRPTRANS %in% c(11,16), portlanddata$TRVLCMIN/2, ifelse(portlanddata$TRPTRANS %in% c(1,2), portlanddata$TRVLCMIN*1, 0))
+```
+
+In the code chunk above we have included bus and light rail trips, but only at half
+the duration.  I propose we change this to a fixed amount, say the
+average time it takes to walk to a bus stop, and score it as walking
+for that duration.
+
 
 ```{r chunk5, eval = FALSE, echo = TRUE, results = "show", warning = TRUE, error = TRUE, message = TRUE, fig.width = 8}
 
