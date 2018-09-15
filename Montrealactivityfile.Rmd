@@ -1,13 +1,16 @@
-install.packages("tidyverse")
+# Activity file for Montreal, QC Canada
+
+```install.packages("tidyverse")
 install.packages("devtools")
 library("tidyverse")
 library("devtools")
 library("knitr")
-
-getwd()
+```
+```getwd()
 setwd("C:/Users/Richard Buote/Desktop/Montreal Data")
 
 trippub <- "C:/Users/Richard Buote/Desktop/Montreal Data/OD2013/deplac/dbf/od13niv2.csv"
+```
 
 # Read in data
 
@@ -47,7 +50,7 @@ montrealdata <- na.omit(montrealdata)
 ## Cycling time calculated using 3.11m/s (186.6m/min; 11.2 km/h) Maybe too slow?
 
 
-```TA.df <- montrealdata %>%
+``` TA.df <- montrealdata %>%
   group_by(mode, houseID, subjectID, agegroup) %>%
   summarise( T = sum(distance) ) %>%
   spread(mode, T, fill = 0) %>%
