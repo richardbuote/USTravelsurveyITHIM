@@ -9,12 +9,13 @@ setwd("C:/Users/Richard Buote/Desktop/Montreal Data")
 
 trippub <- "C:/Users/Richard Buote/Desktop/Montreal Data/OD2013/deplac/dbf/od13niv2.csv"
 
-##Read in data
+# Read in data
 
-montrealtrips <- read.csv2(trippub, header = TRUE, sep = ",")
+```montrealtrips <- read.csv2(trippub, header = TRUE, sep = ",")
 montrealtrips$agegroup <- ifelse(montrealtrips$P_AGE <= 18, 0, 1)
+```
 
-##assign participant ID
+# assign participant ID
 
 ID <- with(montrealtrips, paste(P_AGE, P_SEXE, P_STATUT, M_NUMERO))
 montrealtrips <- within(montrealtrips, Cluster_ID <- match(ID, unique(ID)))
