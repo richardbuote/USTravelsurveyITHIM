@@ -25,7 +25,8 @@ montrealtrips <- within(montrealtrips, Cluster_ID <- match(ID, unique(ID)))
 ```
 # Calculate distance (km)
 
-```montrealtrips[ montrealtrips == 0] <-NA
+```
+montrealtrips[ montrealtrips == 0] <-NA
 montrealtrips$distance <- ((abs(montrealtrips$D_ORIXCOOR - montrealtrips$D_DESXCOOR) + abs(montrealtrips$D_ORIYCOOR - montrealtrips$D_DESYCOOR))/1000)
 ```
 ## Create smaller dataframe
