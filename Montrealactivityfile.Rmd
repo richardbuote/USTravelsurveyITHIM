@@ -1,0 +1,84 @@
+install.packages("tidyverse")
+install.packages("devtools")
+library("tidyverse")
+library("devtools")
+library("knitr")
+
+getwd()
+setwd("C:/Users/Richard Buote/Desktop/Montreal Data")
+
+trippub <- "C:/Users/Richard Buote/Desktop/Montreal Data/OD2013/deplac/dbf/od13niv2.csv"
+
+##Read in data
+
+montrealtrips <- read.csv2(trippub, header = TRUE, sep = ",")
+montrealtrips$agegroup <- ifelse(montrealtrips$P_AGE <= 18, 0, 1)
+
+##assign participant ID
+
+ID <- with(montrealtrips, paste(P_AGE, P_SEXE, P_STATUT, M_NUMERO))
+montrealtrips <- within(montrealtrips, Cluster_ID <- match(ID, unique(ID)))
+
+##Calculate distance (km)
+
+montrealtrips[ montrealtrips == 0] <-NA
+montrealtrips$distance <- ((abs(montrealtrips$D_ORIXCOOR - montrealtrips$D_DESXCOOR) + abs(montrealtrips$D_ORIYCOOR - montrealtrips$D_DESYCOOR))/1000)
+
+## Create smaller dataframe
+
+montrealdata <- with(montrealtrips,{
+    data.frame(M_NUMERO = M_NUMERO,
+            Cluster_ID = Cluster_ID,
+            D_MODE1 = factor(ifelse(D_MODE1 %in% c(18), NA, D_MODE1), levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17), labels = c("car_driver","car_passenger","STM_bus","Metro","RTL_bus","STL_bus","CIT_bus","TRAIN","school_bus","other_bus","taxi","motorcycle","bicycle","on_foot","adapted_transportation","long_distance_mode","junction point")),
+            distance = as.numeric(distance),
+            agegroup = ifelse(P_AGE <= 18, "minor", "adult")
+  )})
+
+montrealdata <- with(montrealdata,{
+  data.frame(houseID = M_NUMERO, subjectID = Cluster_ID, distance = distance, mode = D_MODE1, agegroup = agegroup)
+})
+
+montrealdata <- na.omit(montrealdata)
+
+## Walking time calculated using 1.56 m/s (93.6 m/min; 5.616 km/h) Morency, Demers, Poliquin (2014) Maybe too fast?
+## Cycling time calculated using 3.11m/s (186.6m/min; 11.2 km/h) Maybe too slow?
+
+
+TA.df <- montrealdata %>%
+  group_by(mode, houseID, subjectID, agegroup) %>%
+  summarise( T = sum(distance) ) %>%
+  spread(mode, T, fill = 0) %>%
+  ungroup() %>%
+  filter( (on_foot > 0) | (bicycle > 0) | (STM_bus > 0) | (Metro > 0) | (RTL_bus > 0) | (STL_bus > 0) | (CIT_bus > 0) | (TRAIN > 0) ) %>%
+  select( c(houseID, subjectID, agegroup, on_foot, bicycle, STM_bus, Metro, RTL_bus, STL_bus, CIT_bus, TRAIN)) %>%
+  mutate(TA = 7*(on_foot/.0936 + bicycle/.1866 + ifelse(STM_bus > 0, 15,0) + ifelse(Metro > 0, 15,0) + ifelse(RTL_bus > 0, 15,0) + ifelse(STL_bus > 0, 15,0) + ifelse(CIT_bus > 0, 15,0) + ifelse(TRAIN > 0, 15,0)))
+
+TA.summary <- TA.df %>% group_by(agegroup) %>% summarise(mean = mean(TA), sd = sd(TA))
+
+p0.df <- montrealdata %>%
+  group_by(mode, houseID, subjectID, agegroup) %>%
+  summarise(T = sum(distance)) %>%
+  spread(mode, T, fill = 0) %>%
+  ungroup() %>%
+  group_by(agegroup) %>%
+  summarise( n1 = sum((on_foot > 0) | (bicycle > 0) | (STM_bus > 0) | (Metro > 0) | (RTL_bus > 0) | (STL_bus > 0) | (CIT_bus > 0) | (TRAIN > 0)), n0 = sum((on_foot == 0) & (bicycle == 0) & (STM_bus == 0) & (Metro == 0) & (RTL_bus == 0) & (STL_bus == 0) & (CIT_bus == 0) & (TRAIN == 0)), n = n()) %>%
+  ungroup() %>%
+  mutate(p0 = n0/n) %>%
+  select(agegroup, p0)
+
+activityFile.df <- full_join(TA.summary,p0.df, by = "agegroup")
+colnames(activityFile.df) <- c("ID","mean","sd","p0")
+write.csv(activityFile.df, file = "./montreal.baseline.csv", row.names = FALSE, quote = FALSE)
+
+activityFile.scenario.df <- within(activityFile.df, {
+  p0 <- ifelse( p0 - 0.10 >= 0, p0 - 0.10, 0)
+})
+write.csv(activityFile.scenario.df, file = "./montreal.scenario.csv", row.names = FALSE, quote = FALSE)
+
+activityFile.scenario.df <- within(activityFile.df, {
+  p0 <- ifelse( p0 + 0.10 <= 1, p0 + 0.10, 1)
+})
+write.csv(activityFile.scenario.df, file = "./montreal.scenario.csv", row.names = FALSE, quote = FALSE)
+
+
+
