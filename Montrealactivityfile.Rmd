@@ -38,6 +38,7 @@ montrealtrips$distance <- ((abs(montrealtrips$D_ORIXCOOR - montrealtrips$D_DESXC
             agegroup = ifelse(P_AGE <= 18, "minor", "adult")
   )})
 ```
+# There are a number of zeroes in the data. I've turned them to NA and removed them. I'm not sure if this is the best way to handle it but they were causing issues.
 
 ```montrealdata <- with(montrealdata,{
   data.frame(houseID = M_NUMERO, subjectID = Cluster_ID, distance = distance, mode = D_MODE1, agegroup = agegroup)
