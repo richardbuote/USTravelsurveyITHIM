@@ -1,12 +1,14 @@
 # Activity file for Montreal, QC Canada
 
-```install.packages("tidyverse")
+```
+install.packages("tidyverse")
 install.packages("devtools")
 library("tidyverse")
 library("devtools")
 library("knitr")
 ```
-```getwd()
+```
+getwd()
 setwd("C:/Users/Richard Buote/Desktop/Montreal Data")
 
 trippub <- "C:/Users/Richard Buote/Desktop/Montreal Data/OD2013/deplac/dbf/od13niv2.csv"
@@ -14,13 +16,15 @@ trippub <- "C:/Users/Richard Buote/Desktop/Montreal Data/OD2013/deplac/dbf/od13n
 
 # Read in data
 
-```montrealtrips <- read.csv2(trippub, header = TRUE, sep = ",")
+```
+montrealtrips <- read.csv2(trippub, header = TRUE, sep = ",")
 montrealtrips$agegroup <- ifelse(montrealtrips$P_AGE <= 18, 0, 1)
 ```
 
 # Assign participant ID
 
-```ID <- with(montrealtrips, paste(P_AGE, P_SEXE, P_STATUT, M_NUMERO))
+```
+ID <- with(montrealtrips, paste(P_AGE, P_SEXE, P_STATUT, M_NUMERO))
 montrealtrips <- within(montrealtrips, Cluster_ID <- match(ID, unique(ID)))
 ```
 # Calculate distance (km)
@@ -31,7 +35,8 @@ montrealtrips$distance <- ((abs(montrealtrips$D_ORIXCOOR - montrealtrips$D_DESXC
 ```
 ## Create smaller dataframe
 
-```montrealdata <- with(montrealtrips,{
+```
+montrealdata <- with(montrealtrips,{
     data.frame(M_NUMERO = M_NUMERO,
             Cluster_ID = Cluster_ID,
             D_MODE1 = factor(ifelse(D_MODE1 %in% c(18), NA, D_MODE1), levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17), labels = c("car_driver","car_passenger","STM_bus","Metro","RTL_bus","STL_bus","CIT_bus","TRAIN","school_bus","other_bus","taxi","motorcycle","bicycle","on_foot","adapted_transportation","long_distance_mode","junction point")),
@@ -41,7 +46,8 @@ montrealtrips$distance <- ((abs(montrealtrips$D_ORIXCOOR - montrealtrips$D_DESXC
 ```
 # There are a number of zeroes in the data. I've turned them to NA and removed them. I'm not sure if this is the best way to handle it but they were causing issues.
 
-```montrealdata <- with(montrealdata,{
+```
+montrealdata <- with(montrealdata,{
   data.frame(houseID = M_NUMERO, subjectID = Cluster_ID, distance = distance, mode = D_MODE1, agegroup = agegroup)
 })
 
@@ -52,7 +58,8 @@ montrealdata <- na.omit(montrealdata)
 ## Cycling time calculated using 3.11m/s (186.6m/min; 11.2 km/h) Maybe too slow?
 
 
-``` TA.df <- montrealdata %>%
+``` 
+TA.df <- montrealdata %>%
   group_by(mode, houseID, subjectID, agegroup) %>%
   summarise( T = sum(distance) ) %>%
   spread(mode, T, fill = 0) %>%
@@ -62,10 +69,12 @@ montrealdata <- na.omit(montrealdata)
   mutate(TA = 7*(on_foot/.0936 + bicycle/.1866 + ifelse(STM_bus > 0, 15,0) + ifelse(Metro > 0, 15,0) + ifelse(RTL_bus > 0, 15,0) + ifelse(STL_bus > 0, 15,0) + ifelse(CIT_bus > 0, 15,0) + ifelse(TRAIN > 0, 15,0)))
 ```
 
-```TA.summary <- TA.df %>% group_by(agegroup) %>% summarise(mean = mean(TA), sd = sd(TA))
+```
+TA.summary <- TA.df %>% group_by(agegroup) %>% summarise(mean = mean(TA), sd = sd(TA))
 ```
 
-```p0.df <- montrealdata %>%
+```
+p0.df <- montrealdata %>%
   group_by(mode, houseID, subjectID, agegroup) %>%
   summarise(T = sum(distance)) %>%
   spread(mode, T, fill = 0) %>%
